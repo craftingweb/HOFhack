@@ -51,7 +51,7 @@ export function DashboardShell({ children }: DashboardShellProps) {
               <div className="rounded-md bg-teal-600 p-1">
                 <LifeBuoy className="h-6 w-6 text-white" />
               </div>
-              <span className="font-semibold text-lg">MindClaim</span>
+              <span className="font-semibold text-lg">AppealRX</span>
             </Link>
           </SidebarHeader>
           <SidebarContent>
