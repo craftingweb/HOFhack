@@ -6,6 +6,7 @@ import pinecone
 from dotenv import load_dotenv
 from pinecone import ServerlessSpec
 
+# Load environment variables from .env file
 load_dotenv()
 JINA_API_KEY = os.getenv("JINA_API_KEY")
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
@@ -59,47 +60,79 @@ try:
             "normalized": False
         }
         resp = requests.post(JINA_URL, headers=HEADERS, json=payload)
-        print(resp.json())
-        return resp.json()
+        # For debugging, just print a small portion of the response
+        print(f"Response received from Jina AI, status: {resp.status_code}")
+        json_resp = resp.json()
+        # Return only the embedding data
+        return json_resp["data"][0]["embedding"]
 
     print("Testing Jina AI connection...")
     test_embedding = get_embedding("Test embedding")
+    print(f"Successfully obtained test embedding with dimension: {len(test_embedding)}")
+
+    # Get the absolute path to the data file
+    data_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "new_output.json")
+    print(f"Looking for data file at: {data_file_path}")
+    
+    if not os.path.exists(data_file_path):
+        raise FileNotFoundError(f"Data file not found at: {data_file_path}")
 
     print("Loading data file...")
-    with open("backend/data/new_output.json", "r") as f:
+    with open(data_file_path, "r") as f:
         records = json.load(f)
 
     print(f"Loaded {len(records)} records from data file.")
 
     batch_size = 10
     to_upsert = []
+    processed_count = 0
 
     for rec in records:
-        text = rec["Decision Rationale"]
+        id = rec["id"]
+        del rec["id"]
+        text = json.dumps(rec)
         embedding = get_embedding(text)
+        processed_count += 1
+        
+        if processed_count % 10 == 0:
+            print(f"Processed {processed_count}/{len(records)} records...")
 
         dt = datetime.utcfromtimestamp(rec["Decision Date"] / 1000).isoformat() + "Z"
 
+        # Ensure all metadata fields have non-null values
         metadata = {
-            "decision": rec["Decision"],
+            "decision": rec.get("Decision", "") or "",
             "decision_date": dt,
-            "condition": rec["Condition"],
-            "treatment": rec["Treatment"],
-            "coverage_type": rec["Coverage Type"],
-            "rationale": text,
+            "condition": rec.get("Condition", "") or "",
+            "treatment": rec.get("Treatment", "") or "",
+            "coverage_type": rec.get("Coverage Type", "") or "",
+            "rationale": text or "",
         }
 
-        to_upsert.append((str(rec["id"]), embedding, metadata))
+        # Debug output to check for null values
+        if processed_count <= 5:
+            print(f"Record {processed_count} metadata:")
+            for key, value in metadata.items():
+                print(f"  {key}: {type(value).__name__} - {value[:30] if isinstance(value, str) and len(value) > 30 else value}")
+
+        to_upsert.append((str(id), embedding, metadata))
 
         if len(to_upsert) >= batch_size:
+            print(f"Upserting batch of {len(to_upsert)} records...")
             index.upsert(vectors=to_upsert)
             to_upsert.clear()
+            print("Batch upserted successfully.")
 
     if to_upsert:
+        print(f"Upserting final batch of {len(to_upsert)} records...")
         index.upsert(vectors=to_upsert)
+        print("Final batch upserted successfully.")
 
     print(f"Upserted {len(records)} records into Pinecone index '{index_name}'.")
 
+except FileNotFoundError as e:
+    print(f"File not found error: {str(e)}")
+    print("Please check that the data file exists at the specified path.")
 except Exception as e:
     print(f"An error occurred: {str(e)}")
     print("Please check your API keys and environment settings.")
