@@ -113,10 +113,13 @@ llm = ChatDeepSeek(
     timeout=None,
 )
 
-# Initialize Pinecone index
+# Initialize Pinecone indexes
 index_name = "health-claims"
+legal_index_name = "health-claims-legal-sourcing"
 index = pc.Index(index_name)
+legal_index = pc.Index(legal_index_name)
 vectorstore = PineconeVectorStore(pinecone_api_key=PINECONE_API_KEY, index=index, embedding=embeddings)
+legal_vectorstore = PineconeVectorStore(pinecone_api_key=PINECONE_API_KEY, index=legal_index, embedding=embeddings)
 
 # DeepSeek configuration
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
@@ -303,6 +306,21 @@ async def get_appeal_guidance(claim: HealthClaim):
     )
 
     summary = response.choices[0].message.content
+
+    response = client.chat.completions.create(
+        model="deepseek-chat",
+        messages=[
+            {"role": "system", "content": "You are a health insurance claims expert."},
+            {"role": "user", "content": "Based on the following reference information about health claims:  {combined_context}, Provide a complete, updated appeal letter based on the guidance and the original appeal."},
+            {"role": "user", "content": guidance_text},
+            {"role": "user", "content": (f"Condition: {claim.condition}\nTreatment: {claim.requested_treatment}\nProvider: {claim.health_insurance_provider}\nExplanation: {claim.explanation}")}
+        ],
+        temperature=0.1,
+        max_tokens=8192
+    )
+
+    appeal_text = response.choices[0].message.content
+
     
     # Extract guidelines (assuming DeepSeek returns them in a list format)
     guidelines = [line.strip() for line in guidance_text.split("\n") if line.strip().startswith("Guideline")]
@@ -312,7 +330,113 @@ async def get_appeal_guidance(claim: HealthClaim):
     return AppealGuidance(
         guidelines=guidelines,
         reasoning=guidance_text,
-        summary=summary
+        summary=summary,
+        appeal=appeal_text  
+    )
+
+@app.post("/get-legal-sourcing-guidance", response_model=AppealGuidance)
+async def get_legal_sourcing_guidance(claim: HealthClaim):
+    """
+    Provide legal sourcing guidance using RAG with both Pinecone databases.
+    """
+    # Create a query from the claim details
+    query = f"""
+    Condition: {claim.condition}
+    Treatment: {claim.requested_treatment}
+    Provider: {claim.health_insurance_provider}
+    Explanation: {claim.explanation}
+    """
+    
+    # Get embeddings directly from Jina API
+    query_embedding = get_embedding(query)    
+    
+    # Query both Pinecone indexes
+    health_results = index.query(
+        vector=query_embedding,
+        top_k=3,
+        include_metadata=True
+    )
+    
+    legal_results = legal_index.query(
+        vector=query_embedding,
+        top_k=3,
+        include_metadata=True
+    )
+    
+    # Process results and format response
+    health_contexts = [item['metadata'] for item in health_results['matches']]
+    legal_contexts = [item['metadata'] for item in legal_results['matches']]
+    
+    # Combine contexts
+    combined_context = "\n\nHealth Claims Context:\n" + "\n\n".join(json.dumps(context) for context in health_contexts)
+    combined_context += "\n\nLegal Sourcing Context:\n" + "\n\n".join(json.dumps(context) for context in legal_contexts)
+    
+    prompt = f"""
+    Based on the following reference information about health claims and legal precedents:
+    {combined_context}
+    
+    Provide legal sourcing guidance for this claim:
+    Condition: {claim.condition}
+    Treatment: {claim.requested_treatment}
+    Provider: {claim.health_insurance_provider}
+    Explanation: {claim.explanation}
+    
+    Give specific, actionable guidance for:
+    1. Legal precedents that support this claim
+    2. Relevant case law citations
+    3. Legal arguments that could strengthen the appeal
+    4. Potential legal challenges and how to address them
+    
+    Use both the health claims and legal sourcing contexts to provide comprehensive guidance.
+    """
+    
+    response = client.chat.completions.create(
+        model="deepseek-chat",
+        messages=[
+            {"role": "system", "content": "You are a legal expert specializing in health insurance claims and appeals."},
+            {"role": "user", "content": prompt},
+        ],
+        temperature=0.1,
+        max_tokens=8192
+    )
+    
+    guidance_text = response.choices[0].message.content
+
+    response = client.chat.completions.create(
+        model="deepseek-chat",
+        messages=[
+            {"role": "system", "content": "You are a legal expert specializing in health insurance claims and appeals."},
+            {"role": "user", "content": "Summarize the following guidance, as well as the appeal as a whole, in a short, patient-friendly summary."},
+            {"role": "user", "content": guidance_text}
+        ],
+        temperature=0.1,
+        max_tokens=1000
+    )
+
+    summary = response.choices[0].message.content
+
+
+    response = client.chat.completions.create(
+        model="deepseek-chat",
+        messages=[
+            {"role": "system", "content": "You are a health insurance claims expert."},
+            {"role": "user", "content": "Based on the following reference information about health claims and legal precedents:  {combined_context}, Provide a complete, updated appeal letter based on the guidance and the original appeal."},
+            {"role": "user", "content": guidance_text},
+            {"role": "user", "content": (f"Condition: {claim.condition}\nTreatment: {claim.requested_treatment}\nProvider: {claim.health_insurance_provider}\nExplanation: {claim.explanation}")}
+        ],
+        temperature=0.1,
+        max_tokens=8192
+    )
+
+    appeal_text = response.choices[0].message.content
+
+    
+    
+    return AppealGuidance(
+        guidelines=guidelines,
+        reasoning=guidance_text,
+        summary=summary,
+        appeal=appeal_text  
     )
 
 @app.post("/direct-upload")
