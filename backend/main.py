@@ -9,8 +9,8 @@ import io
 import requests
 from langchain_community.embeddings import OpenAIEmbeddings
 from langchain_community.chat_models import ChatOpenAI
-from langchain.vectorstores import Pinecone
-from langchain.embeddings import JinaEmbeddings
+from langchain_community.vectorstores import Pinecone
+from langchain_community.embeddings import JinaEmbeddings
 from langchain_deepseek import ChatDeepSeek
 from langchain.chains import RetrievalQA
 from langchain_pinecone import PineconeVectorStore
