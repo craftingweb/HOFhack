@@ -1,0 +1,15 @@
+fastapi==0.104.1
+uvicorn==0.24.0
+python-multipart==0.0.6
+PyPDF2==3.0.1
+python-dotenv==1.0.0
+requests==2.31.0
+pydantic==2.7.4
+pandas==2.1.1
+pinecone
+fastapi==0.115.12
+uvicorn==0.34.1
+python-dotenv==1.1.0
+langchain==0.3.23
+langchain-openai==0.3.14
+openai==1.75.0

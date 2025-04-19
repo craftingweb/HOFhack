@@ -19,7 +19,8 @@ if PINECONE_API_KEY and PINECONE_API_KEY.startswith("jina_"):
     print("Please check your API keys and update the .env file with the correct keys.")
     exit(1)
 
-try:
+if True:
+#try:
     # Initialize Pinecone
     pc = pinecone.Pinecone(api_key=PINECONE_API_KEY)
     
@@ -34,7 +35,7 @@ try:
         print(f"Creating new index: {index_name}")
         pc.create_index(
             name=index_name,
-            dimension=256,
+            dimension=1024,
             metric='cosine',
             spec=ServerlessSpec(
                 cloud="aws",        # or "gcp" depending on your Pinecone project
@@ -60,10 +61,23 @@ try:
             "normalized": False
         }
         resp = requests.post(JINA_URL, headers=HEADERS, json=payload)
-        # For debugging, just print a small portion of the response
+        print(resp.content)
         print(f"Response received from Jina AI, status: {resp.status_code}")
         json_resp = resp.json()
-        # Return only the embedding data
+        print(f"Full response: {json_resp}")
+        
+        if "data" not in json_resp:
+            print(f"Error: Response missing 'data' key. Full response: {json_resp}")
+            if "error" in json_resp:
+                print(f"API Error: {json_resp['error']}")
+            raise KeyError(f"Response missing 'data' key. Full response: {json_resp}")
+        
+        if not json_resp["data"]:
+            raise ValueError("Response data is empty")
+        
+        if "embedding" not in json_resp["data"][0]:
+            raise KeyError(f"Response missing 'embedding' key. Data: {json_resp['data'][0]}")
+        
         return json_resp["data"][0]["embedding"]
 
     print("Testing Jina AI connection...")
@@ -130,9 +144,9 @@ try:
 
     print(f"Upserted {len(records)} records into Pinecone index '{index_name}'.")
 
-except FileNotFoundError as e:
-    print(f"File not found error: {str(e)}")
-    print("Please check that the data file exists at the specified path.")
-except Exception as e:
-    print(f"An error occurred: {str(e)}")
-    print("Please check your API keys and environment settings.")
+#except FileNotFoundError as e:
+#    print(f"File not found error: {str(e)}")
+#    print("Please check that the data file exists at the specified path.")
+#except Exception as e:
+#    print(f"An error occurred: {str(e)}")
+#    print("Please check your API keys and environment settings.")
