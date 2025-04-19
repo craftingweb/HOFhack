@@ -109,7 +109,7 @@ async def process_with_deepseek(text: str) -> dict:
     
     prompt = f"""
     Extract the following information from the provided text and return it in JSON format:
-    - condition: The medical condition being treated
+    - condition: The medical condition being treated: [Mental Health] or [Substance Abuse/ Addiction]
     - date: The date of the claim in ISO format
     - health_insurance_provider: The name of the insurance provider
     - requested_treatment: The treatment being requested
@@ -249,7 +249,7 @@ async def get_appeal_guidance(claim: HealthClaim):
     Provider: {claim.health_insurance_provider}
     Explanation: {claim.explanation}
     
-    Give specific, actionable guidance for improving the appeal.
+    Give specific, actionable guidance for improving the appeal. Use the reference information to identify similar cases and provide examples.
     """
     
     response = client.chat.completions.create(
@@ -259,7 +259,7 @@ async def get_appeal_guidance(claim: HealthClaim):
             {"role": "user", "content": prompt}
         ],
         temperature=0.1,
-        max_tokens=1000
+        max_tokens=8192
     )
     
     guidance_text = response.choices[0].message.content
@@ -267,7 +267,7 @@ async def get_appeal_guidance(claim: HealthClaim):
     # Extract guidelines (assuming DeepSeek returns them in a list format)
     guidelines = [line.strip() for line in guidance_text.split("\n") if line.strip().startswith("Guideline")]
     if not guidelines:
-        guidelines = ["Provide detailed medical documentation", "Include peer-reviewed studies", "Demonstrate medical necessity"]
+        guidelines = ["Demonstrate medical necessity", "Ensure all required documentation is provided", "Justify the requested treatment"]
     
     return AppealGuidance(
         guidelines=guidelines,
