@@ -1,0 +1,9 @@
+[phases.setup]
+nixPkgs=["poppler_utils","poppler"]
+
+[build]
+builder = "nixpacks"
+buildCommand = "poetry install --no-root"
+
+[deploy]
+startCommand = "poetry run python3 main.py"

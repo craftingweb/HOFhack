@@ -101,7 +101,7 @@ if True:
     to_upsert = []
     processed_count = 0
 
-    for rec in records:
+    for rec in records[3310:]:
         id = rec["id"]
         del rec["id"]
         text = json.dumps(rec)
