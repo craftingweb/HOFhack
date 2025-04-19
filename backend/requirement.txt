@@ -1,8 +1,0 @@
-pandas==2.1.1
-pinecone-client==6.0.0
-fastapi==0.115.12
-uvicorn==0.34.1
-python-dotenv==1.1.0
-langchain==0.3.23
-langchain-openai==0.3.14
-openai==1.75.0

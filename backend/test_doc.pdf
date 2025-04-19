@@ -1,0 +1,54 @@
+%PDF-1.4
+1 0 obj
+<< /Title (Test PDF Document)
+   /Author (Automated Test)
+   /Subject (Testing File Upload)
+   /Keywords (test, pdf, upload)
+   /Creator (direct_upload_test.py)
+   /CreationDate (2025-04-19T09:23:43.439950)
+>>
+endobj
+2 0 obj
+<< /Type /Catalog
+   /Pages 3 0 R
+>>
+endobj
+3 0 obj
+<< /Type /Pages
+   /Kids [4 0 R]
+   /Count 1
+>>
+endobj
+4 0 obj
+<< /Type /Page
+   /Parent 3 0 R
+   /Resources << >>
+   /Contents 5 0 R
+>>
+endobj
+5 0 obj
+<< /Length 68 >>
+stream
+BT
+/F1 24 Tf
+100 700 Td
+(Test PDF - 2025-04-19 09:23:43) Tj
+ET
+stream
+endobj
+xref
+0 6
+0000000000 65535 f
+0000000010 00000 n
+0000000179 00000 n
+0000000228 00000 n
+0000000284 00000 n
+0000000354 00000 n
+trailer
+<< /Root 2 0 R
+   /Info 1 0 R
+   /Size 6
+>>
+startxref
+474
+%%EOF

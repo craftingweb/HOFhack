@@ -1,0 +1,37 @@
+{
+  "provider": {
+    "providerType": "psychologist",
+    "providerName": "asd",
+    "providerNPI": "asd",
+    "providerTaxId": "asd",
+    "providerLicense": "asd",
+    "practiceName": "asd",
+    "providerAddress": "asd",
+    "providerPhone": "asd",
+    "providerEmail": "asd",
+    "networkStatus": "in-network"
+  },
+  "patient": {
+    "patientName": "asd",
+    "patientDob": "23123-12-31",
+    "patientInsuranceId": "1231231231",
+    "patientInsuranceProvider": "other",
+    "insuranceEmail": "123123123"
+  },
+  "service": {
+    "serviceType": "group-therapy",
+    "serviceDate": "23123-12-31",
+    "totalCharge": "123123",
+    "cptCode": "123123",
+    "diagnosisCode": "123123",
+    "placeOfService": "11",
+    "paymentCollected": "-2123",
+    "serviceDescription": "123123123",
+    "uploadedFiles": [
+      "MCP.pdf"
+    ]
+  },
+  "submittedAt": "2025-04-19T12:42:43.649Z",
+  "status": "pending",
+  "claimId": "MH-2025-4952"
+}

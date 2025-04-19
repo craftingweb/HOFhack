@@ -1,5 +1,9 @@
+"use client"
+
 import Link from "next/link"
 import { FilePlus, Search } from "lucide-react"
+import { useEffect, useState } from "react"
+import { Suspense } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,7 +12,109 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DashboardShell } from "@/components/dashboard-shell"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { claimsApi, Claim } from "@/lib/api"
 
+// Client component for fetching and displaying claims
+function ClaimsTable({ status }: { status?: string }) {
+  const [claims, setClaims] = useState<Claim[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  useEffect(() => {
+    const fetchClaims = async () => {
+      try {
+        setLoading(true);
+        const result = await claimsApi.getClaims(status);
+        setClaims(result.claims);
+      } catch (err) {
+        console.error('Error fetching claims:', err);
+        setError('Failed to load claims. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchClaims();
+  }, [status]);
+  
+  if (loading) {
+    return <p className="text-center py-4">Loading claims...</p>;
+  }
+  
+  if (error) {
+    return <p className="text-center py-4 text-red-500">{error}</p>;
+  }
+  
+  if (claims.length === 0) {
+    return <p className="text-center py-4">No claims found.</p>;
+  }
+  
+  // Helper function to format date
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric', 
+      year: 'numeric' 
+    });
+  };
+  
+  // Get status color for status indicator
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return 'bg-yellow-500';
+      case 'approved':
+        return 'bg-green-500';
+      case 'denied':
+        return 'bg-red-500';
+      case 'appealed':
+        return 'bg-blue-500';
+      case 'info-requested':
+        return 'bg-orange-500';
+      default:
+        return 'bg-gray-500';
+    }
+  };
+  
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Claim ID</TableHead>
+          <TableHead>Provider</TableHead>
+          <TableHead>Service Date</TableHead>
+          <TableHead>Amount</TableHead>
+          <TableHead>Status</TableHead>
+          <TableHead className="text-right">Actions</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {claims.map((claim) => (
+          <TableRow key={claim.claimId}>
+            <TableCell className="font-medium">{claim.claimId}</TableCell>
+            <TableCell>{claim.provider.providerName || 'Unknown Provider'}</TableCell>
+            <TableCell>{claim.service.serviceDate ? formatDate(claim.service.serviceDate) : 'N/A'}</TableCell>
+            <TableCell>${claim.service.totalCharge || '0.00'}</TableCell>
+            <TableCell>
+              <div className="flex items-center">
+                <span className={`inline-block h-2 w-2 rounded-full ${getStatusColor(claim.status)} mr-2`}></span>
+                <span>{claim.status.charAt(0).toUpperCase() + claim.status.slice(1).replace('-', ' ')}</span>
+              </div>
+            </TableCell>
+            <TableCell className="text-right">
+              <Button variant="ghost" size="sm" asChild>
+                <Link href={`/dashboard/claims/${claim.claimId}`}>View</Link>
+              </Button>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+}
+
+// Use server component as main page
 export default function ClaimsPage() {
   return (
     <DashboardShell>
@@ -59,243 +165,29 @@ export default function ClaimsPage() {
                 <TabsTrigger value="denied">Denied</TabsTrigger>
               </TabsList>
               <TabsContent value="all" className="mt-4">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Claim ID</TableHead>
-                      <TableHead>Provider</TableHead>
-                      <TableHead>Service Date</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell className="font-medium">MH-2025-0412</TableCell>
-                      <TableCell>Dr. Smith</TableCell>
-                      <TableCell>Apr 12, 2025</TableCell>
-                      <TableCell>$150.00</TableCell>
-                      <TableCell>
-                        <div className="flex items-center">
-                          <span className="inline-block h-2 w-2 rounded-full bg-yellow-500 mr-2"></span>
-                          <span>Pending</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link href="/dashboard/claims/MH-2025-0412">View</Link>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium">MH-2025-0405</TableCell>
-                      <TableCell>Dr. Johnson</TableCell>
-                      <TableCell>Apr 5, 2025</TableCell>
-                      <TableCell>$225.00</TableCell>
-                      <TableCell>
-                        <div className="flex items-center">
-                          <span className="inline-block h-2 w-2 rounded-full bg-yellow-500 mr-2"></span>
-                          <span>Info Requested</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link href="/dashboard/claims/MH-2025-0405">View</Link>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium">MH-2025-0328</TableCell>
-                      <TableCell>Wellness Center</TableCell>
-                      <TableCell>Mar 28, 2025</TableCell>
-                      <TableCell>$75.00</TableCell>
-                      <TableCell>
-                        <div className="flex items-center">
-                          <span className="inline-block h-2 w-2 rounded-full bg-red-500 mr-2"></span>
-                          <span>Denied</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link href="/dashboard/claims/MH-2025-0328">View</Link>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium">MH-2025-0315</TableCell>
-                      <TableCell>Dr. Smith</TableCell>
-                      <TableCell>Mar 15, 2025</TableCell>
-                      <TableCell>$150.00</TableCell>
-                      <TableCell>
-                        <div className="flex items-center">
-                          <span className="inline-block h-2 w-2 rounded-full bg-green-500 mr-2"></span>
-                          <span>Approved</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link href="/dashboard/claims/MH-2025-0315">View</Link>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium">MH-2025-0301</TableCell>
-                      <TableCell>Dr. Smith</TableCell>
-                      <TableCell>Mar 1, 2025</TableCell>
-                      <TableCell>$150.00</TableCell>
-                      <TableCell>
-                        <div className="flex items-center">
-                          <span className="inline-block h-2 w-2 rounded-full bg-green-500 mr-2"></span>
-                          <span>Approved</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link href="/dashboard/claims/MH-2025-0301">View</Link>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
+                <Suspense fallback={<p className="text-center py-4">Loading claims...</p>}>
+                  <ClaimsTable />
+                </Suspense>
               </TabsContent>
               <TabsContent value="pending" className="mt-4">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Claim ID</TableHead>
-                      <TableHead>Provider</TableHead>
-                      <TableHead>Service Date</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell className="font-medium">MH-2025-0412</TableCell>
-                      <TableCell>Dr. Smith</TableCell>
-                      <TableCell>Apr 12, 2025</TableCell>
-                      <TableCell>$150.00</TableCell>
-                      <TableCell>
-                        <div className="flex items-center">
-                          <span className="inline-block h-2 w-2 rounded-full bg-yellow-500 mr-2"></span>
-                          <span>Pending</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link href="/dashboard/claims/MH-2025-0412">View</Link>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium">MH-2025-0405</TableCell>
-                      <TableCell>Dr. Johnson</TableCell>
-                      <TableCell>Apr 5, 2025</TableCell>
-                      <TableCell>$225.00</TableCell>
-                      <TableCell>
-                        <div className="flex items-center">
-                          <span className="inline-block h-2 w-2 rounded-full bg-yellow-500 mr-2"></span>
-                          <span>Info Requested</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link href="/dashboard/claims/MH-2025-0405">View</Link>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
+                <Suspense fallback={<p className="text-center py-4">Loading claims...</p>}>
+                  <ClaimsTable status="pending" />
+                </Suspense>
               </TabsContent>
               <TabsContent value="approved" className="mt-4">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Claim ID</TableHead>
-                      <TableHead>Provider</TableHead>
-                      <TableHead>Service Date</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell className="font-medium">MH-2025-0315</TableCell>
-                      <TableCell>Dr. Smith</TableCell>
-                      <TableCell>Mar 15, 2025</TableCell>
-                      <TableCell>$150.00</TableCell>
-                      <TableCell>
-                        <div className="flex items-center">
-                          <span className="inline-block h-2 w-2 rounded-full bg-green-500 mr-2"></span>
-                          <span>Approved</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link href="/dashboard/claims/MH-2025-0315">View</Link>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium">MH-2025-0301</TableCell>
-                      <TableCell>Dr. Smith</TableCell>
-                      <TableCell>Mar 1, 2025</TableCell>
-                      <TableCell>$150.00</TableCell>
-                      <TableCell>
-                        <div className="flex items-center">
-                          <span className="inline-block h-2 w-2 rounded-full bg-green-500 mr-2"></span>
-                          <span>Approved</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link href="/dashboard/claims/MH-2025-0301">View</Link>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
+                <Suspense fallback={<p className="text-center py-4">Loading claims...</p>}>
+                  <ClaimsTable status="approved" />
+                </Suspense>
               </TabsContent>
               <TabsContent value="denied" className="mt-4">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Claim ID</TableHead>
-                      <TableHead>Provider</TableHead>
-                      <TableHead>Service Date</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell className="font-medium">MH-2025-0328</TableCell>
-                      <TableCell>Wellness Center</TableCell>
-                      <TableCell>Mar 28, 2025</TableCell>
-                      <TableCell>$75.00</TableCell>
-                      <TableCell>
-                        <div className="flex items-center">
-                          <span className="inline-block h-2 w-2 rounded-full bg-red-500 mr-2"></span>
-                          <span>Denied</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link href="/dashboard/claims/MH-2025-0328">View</Link>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
+                <Suspense fallback={<p className="text-center py-4">Loading claims...</p>}>
+                  <ClaimsTable status="denied" />
+                </Suspense>
               </TabsContent>
             </Tabs>
           </div>
         </CardContent>
       </Card>
     </DashboardShell>
-  )
+  );
 }

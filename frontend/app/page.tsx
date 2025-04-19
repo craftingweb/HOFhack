@@ -40,13 +40,13 @@ export default function LandingPage() {
           </div>
           <div className="flex items-center gap-4">
             <Link
-              href="api/auth/login?returnTo=/dashboard"
+              href="/dashboard"
               className="text-sm font-medium"
             >
               Login
             </Link>
             <Button asChild>
-              <Link href="/login?signup=true">Sign Up</Link>
+              <Link href="/dashboard">Sign Up</Link>
             </Button>
             <Link
               href="/help"
@@ -77,7 +77,7 @@ export default function LandingPage() {
                     size="lg"
                     className="bg-emerald-600 hover:bg-emerald-700"
                   >
-                    <Link href="/login?signup=true">
+                    <Link href="/dashboard">
                       Start My Claim <ArrowRight className="ml-2 h-4 w-4" />
                     </Link>
                   </Button>
@@ -210,7 +210,7 @@ export default function LandingPage() {
                 size="lg"
                 className="bg-emerald-600 hover:bg-emerald-700"
               >
-                <Link href="/login?signup=true">Check My Eligibility</Link>
+                <Link href="/dashboard">Check My Eligibility</Link>
               </Button>
             </div>
           </div>
@@ -252,7 +252,7 @@ export default function LandingPage() {
                     asChild
                     className="w-full bg-emerald-600 hover:bg-emerald-700"
                   >
-                    <Link href="/login?signup=true">Get Help Now</Link>
+                    <Link href="/dashboard">Get Help Now</Link>
                   </Button>
                   <Button asChild variant="outline" className="w-full">
                     <Link href="/help">Learn More</Link>

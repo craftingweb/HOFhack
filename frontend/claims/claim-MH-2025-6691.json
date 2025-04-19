@@ -1,0 +1,35 @@
+{
+  "provider": {
+    "providerType": "psychologist",
+    "providerName": "",
+    "providerNPI": "",
+    "providerTaxId": "",
+    "providerLicense": "",
+    "practiceName": "",
+    "providerAddress": "",
+    "providerPhone": "",
+    "providerEmail": "",
+    "networkStatus": "in-network"
+  },
+  "patient": {
+    "patientName": "",
+    "patientDob": "",
+    "patientInsuranceId": "",
+    "patientInsuranceProvider": "",
+    "insuranceEmail": ""
+  },
+  "service": {
+    "serviceType": "individual-therapy",
+    "serviceDate": "",
+    "totalCharge": "",
+    "cptCode": "",
+    "diagnosisCode": "",
+    "placeOfService": "11",
+    "paymentCollected": "0",
+    "serviceDescription": "",
+    "uploadedFiles": []
+  },
+  "submittedAt": "2025-04-19T12:32:42.629Z",
+  "status": "pending",
+  "claimId": "MH-2025-6691"
+}

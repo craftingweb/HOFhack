@@ -11,7 +11,7 @@ def main():
     """
     Run the FastAPI application with the configured settings.
     """
-    print("🚀 Starting Mental Health Claims API server...")
+    print("Starting Mental Health Claims API server...")
     
     # Get configuration from environment variables or use defaults
     host = os.getenv("API_HOST", "0.0.0.0")
@@ -19,7 +19,7 @@ def main():
     
     # Run the server
     uvicorn.run(
-        "claims_api:app", 
+        "main:app", 
         host=host, 
         port=port, 
         reload=True,

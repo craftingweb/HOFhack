@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Form, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
@@ -7,18 +7,27 @@ from datetime import datetime
 import PyPDF2
 import io
 import requests
-from langchain.vectorstores import Pinecone
-from langchain.embeddings import OpenAIEmbeddings
-from langchain.chat_models import ChatOpenAI
+from langchain_community.vectorstores import Pinecone
+from langchain_community.embeddings import OpenAIEmbeddings
+from langchain_community.chat_models import ChatOpenAI
 from langchain.chains import RetrievalQA
 from langchain_pinecone import PineconeVectorStore
 import pinecone
 import os
 from dotenv import load_dotenv
+from bson import ObjectId
+from pymongo import MongoClient
+
+# Import routers
+from claims_api import router as claims_router
+from classifier import router as classifier_router, register_routes as register_classifier_routes
+from submit_claim_to_provider import router as provider_router, register_routes as register_provider_routes
 
 # Load environment variables
 load_dotenv()
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
+MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
+DB_NAME = os.getenv("DB_NAME", "claims-management")
 
 app = FastAPI()
 
@@ -30,6 +39,19 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include routers
+app.include_router(claims_router)
+app.include_router(classifier_router)
+app.include_router(provider_router)
+
+# Alternative way to register routes if needed
+# register_classifier_routes(app)
+# register_provider_routes(app)
+
+# Database connection for direct uploads
+mongo_client = MongoClient(MONGODB_URI)
+mongo_db = mongo_client[DB_NAME]
 
 # Initialize Pinecone
 pc = pinecone.Pinecone(api_key=PINECONE_API_KEY)
@@ -193,6 +215,138 @@ async def get_appeal_guidance(claim: HealthClaim):
         ],
         reasoning=response
     )
+
+@app.post("/direct-upload")
+async def direct_upload(
+    files: List[UploadFile] = File(...),
+    user_id: Optional[str] = Form(None),
+    claim_id: Optional[str] = Query(None)
+):
+    """
+    Upload files directly to MongoDB GridFS
+    """
+    print(f"Received direct upload request: claim={claim_id}, user={user_id}, files={len(files)}")
+    
+    # Check if claim exists when claim_id is provided
+    if claim_id:
+        try:
+            # Try with ObjectId first
+            try:
+                claim = mongo_db.claims.find_one({"_id": ObjectId(claim_id)})
+            except:
+                claim = mongo_db.claims.find_one({"_id": claim_id})
+                
+            if not claim:
+                claim = mongo_db.claims.find_one({"claimId": claim_id})
+                
+            if not claim:
+                return {"error": f"Claim {claim_id} not found"}
+        except Exception as e:
+            print(f"Error checking claim: {str(e)}")
+            return {"error": f"Error checking claim: {str(e)}"}
+    
+    # Process files
+    file_ids = []
+    file_details = []
+    
+    try:
+        fs = mongo_db.fs
+        
+        for file in files:
+            # Read file content
+            content = await file.read()
+            
+            # Create file metadata
+            filename = file.filename
+            content_type = file.content_type or "application/octet-stream"
+            
+            metadata = {
+                "filename": filename,
+                "content_type": content_type,
+                "uploaded_at": datetime.now(),
+            }
+            
+            if claim_id:
+                metadata["claim_id"] = claim_id
+            
+            if user_id:
+                metadata["user_id"] = user_id
+            
+            # Insert file into GridFS
+            file_id = fs.files.insert_one({
+                "filename": filename,
+                "chunkSize": 261120,
+                "uploadDate": datetime.now(),
+                "metadata": metadata
+            }).inserted_id
+            
+            # Split content into chunks
+            chunk_size = 261120  # Default GridFS chunk size
+            chunks = [content[i:i+chunk_size] for i in range(0, len(content), chunk_size)]
+            
+            # Insert chunks
+            for i, chunk in enumerate(chunks):
+                fs.chunks.insert_one({
+                    "files_id": file_id,
+                    "n": i,
+                    "data": chunk
+                })
+            
+            # Reset file pointer
+            await file.seek(0)
+            
+            # Add file ID to list
+            file_id_str = str(file_id)
+            file_ids.append(file_id_str)
+            
+            # Add file details
+            file_details.append({
+                "file_id": file_id_str,
+                "filename": filename,
+                "content_type": content_type,
+                "size": len(content)
+            })
+            
+            print(f"Successfully uploaded file {filename} with ID {file_id_str}")
+        
+        # Update claim record with file IDs if a claim ID was provided
+        if claim_id and file_ids:
+            try:
+                # Determine the correct _id format
+                claim_query = None
+                try:
+                    obj_id = ObjectId(claim_id)
+                    claim_query = {"_id": obj_id}
+                except:
+                    claim_query = {"_id": claim_id}
+                
+                # Try to update the claim
+                update_result = mongo_db.claims.update_one(
+                    claim_query,
+                    {"$push": {"service.uploadedFiles": {"$each": file_ids}}}
+                )
+                
+                if update_result.modified_count == 0:
+                    # Try with claimId field as fallback
+                    update_result = mongo_db.claims.update_one(
+                        {"claimId": claim_id},
+                        {"$push": {"service.uploadedFiles": {"$each": file_ids}}}
+                    )
+                
+                print(f"Updated claim {claim_id} with {len(file_ids)} files")
+            except Exception as e:
+                print(f"Error updating claim: {str(e)}")
+        
+        return {
+            "success": True,
+            "file_ids": file_ids,
+            "files": file_details,
+            "message": f"Successfully uploaded {len(file_ids)} files"
+        }
+        
+    except Exception as e:
+        print(f"Error uploading files: {str(e)}")
+        return {"error": f"Failed to upload files: {str(e)}"}
 
 if __name__ == "__main__":
     import uvicorn
