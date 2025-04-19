@@ -311,7 +311,7 @@ async def get_appeal_guidance(claim: HealthClaim):
         model="deepseek-chat",
         messages=[
             {"role": "system", "content": "You are a health insurance claims expert."},
-            {"role": "user", "content": "Based on the following reference information about health claims:  {combined_context}, Provide a complete, updated appeal letter based on the guidance and the original appeal."},
+            {"role": "user", "content": "Provide a complete, updated appeal letter based on the guidance and the original appeal."},
             {"role": "user", "content": guidance_text},
             {"role": "user", "content": (f"Condition: {claim.condition}\nTreatment: {claim.requested_treatment}\nProvider: {claim.health_insurance_provider}\nExplanation: {claim.explanation}")}
         ],
@@ -420,7 +420,7 @@ async def get_legal_sourcing_guidance(claim: HealthClaim):
         model="deepseek-chat",
         messages=[
             {"role": "system", "content": "You are a health insurance claims expert."},
-            {"role": "user", "content": "Based on the following reference information about health claims and legal precedents:  {combined_context}, Provide a complete, updated appeal letter based on the guidance and the original appeal."},
+            {"role": "user", "content": "Provide a complete, updated appeal letter based on the guidance and the original appeal."},
             {"role": "user", "content": guidance_text},
             {"role": "user", "content": (f"Condition: {claim.condition}\nTreatment: {claim.requested_treatment}\nProvider: {claim.health_insurance_provider}\nExplanation: {claim.explanation}")}
         ],
