@@ -5,8 +5,11 @@ from typing import List, Optional, Dict, Any
 from pydantic import BaseModel
 import json
 import base64
+from pymongo import MongoClient
+from pymongo.collection import Collection
 from bson import ObjectId
 from datetime import datetime
+import os
 
 from claim_models import Claim, ClaimInDB, ClaimStatus
 from claim_service import ClaimService

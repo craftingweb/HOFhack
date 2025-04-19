@@ -17,8 +17,9 @@ from langchain_pinecone import PineconeVectorStore
 import pinecone
 import os
 from dotenv import load_dotenv
-from bson import ObjectId
 from pymongo import MongoClient
+from pymongo.collection import Collection
+from bson import ObjectId, SON
 
 # Import routers
 from claims_api import router as claims_router

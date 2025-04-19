@@ -1,9 +1,10 @@
 import uuid
 from datetime import datetime
 from typing import List, Optional
-from bson import ObjectId
+from pymongo import MongoClient
 from pymongo.collection import Collection
 from pymongo.results import InsertOneResult, UpdateResult, DeleteResult
+from bson import ObjectId
 
 from database import get_claims_collection
 from claim_models import Claim, ClaimInDB, ClaimStatus

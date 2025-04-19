@@ -5,8 +5,9 @@ from typing import List, Optional
 from datetime import datetime
 from fastapi import UploadFile
 from motor.motor_asyncio import AsyncIOMotorGridFSBucket
-from bson import ObjectId
 from pymongo import MongoClient
+from pymongo.collection import Collection
+from bson import ObjectId
 
 from database import get_db
 

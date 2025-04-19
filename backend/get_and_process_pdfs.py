@@ -5,6 +5,7 @@ import sys
 import requests
 import tempfile
 from pymongo import MongoClient
+from pymongo.collection import Collection
 from bson import ObjectId
 from dotenv import load_dotenv
 import argparse

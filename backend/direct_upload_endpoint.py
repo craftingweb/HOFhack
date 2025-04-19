@@ -7,8 +7,9 @@ import os
 from dotenv import load_dotenv
 import uvicorn
 from datetime import datetime
-from bson import ObjectId
 from pymongo import MongoClient
+from pymongo.collection import Collection
+from bson import ObjectId
 
 # Load environment variables from .env file
 load_dotenv()
