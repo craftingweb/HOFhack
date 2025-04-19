@@ -24,7 +24,7 @@ export default function LandingPage() {
             </nav>
           </div>
           <div className="flex items-center gap-4">
-            <Link href="/login" className="text-sm font-medium">
+            <Link href="/auth/login?redirect_uri=/dashboard" className="text-sm font-medium">
               Login
             </Link>
             <Button asChild>
