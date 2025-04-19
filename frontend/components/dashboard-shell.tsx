@@ -34,10 +34,10 @@ export function DashboardShell({ children }: DashboardShellProps) {
   const pathname = usePathname()
 
   const navigation = [
-    { name: "Dashboard", href: "/", icon: Home },
-    { name: "My Claims", href: "/claims", icon: FileCheck },
-    { name: "New Claim", href: "/claims/new", icon: FilePlus },
-    { name: "Resources", href: "/resources", icon: BookOpen },
+    { name: "Dashboard", href: "/dashboard", icon: Home },
+    { name: "My Claims", href: "/dashboard/claims", icon: FileCheck },
+    { name: "New Claim", href: "/dashboard/claims/new", icon: FilePlus },
+    { name: "Resources", href: "/dashboard/resources", icon: BookOpen },
     { name: "Help Center", href: "/help", icon: HelpCircle },
     { name: "Settings", href: "/settings", icon: Settings },
   ]
@@ -47,7 +47,7 @@ export function DashboardShell({ children }: DashboardShellProps) {
       <div className="flex min-h-screen">
         <Sidebar>
           <SidebarHeader className="border-b px-6 py-3">
-            <Link href="/" className="flex items-center gap-2">
+            <Link href="/dashboard" className="flex items-center gap-2">
               <div className="rounded-md bg-teal-600 p-1">
                 <LifeBuoy className="h-6 w-6 text-white" />
               </div>

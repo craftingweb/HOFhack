@@ -18,7 +18,7 @@ export default function Page() {
           </p>
         </div>
         <Button asChild>
-          <Link href="/claims/new">
+          <Link href="/dashboard/claims/new">
             <FilePlus className="mr-2 h-4 w-4" />
             New Claim
           </Link>
@@ -146,7 +146,7 @@ export default function Page() {
               </CardContent>
               <CardFooter>
                 <Button variant="outline" className="w-full" asChild>
-                  <Link href="/claims">View All Claims</Link>
+                  <Link href="/dashboard/claims">View All Claims</Link>
                 </Button>
               </CardFooter>
             </Card>
@@ -250,7 +250,7 @@ export default function Page() {
             </CardContent>
             <CardFooter>
               <Button variant="outline" className="w-full" asChild>
-                <Link href="/claims">View All Claims</Link>
+                <Link href="/dashboard/claims">View All Claims</Link>
               </Button>
             </CardFooter>
           </Card>
@@ -274,7 +274,7 @@ export default function Page() {
                   </CardContent>
                   <CardFooter>
                     <Button variant="ghost" size="sm" className="w-full" asChild>
-                      <Link href="/resources/parity">Read Guide</Link>
+                      <Link href="/dashboard/resources/parity">Read Guide</Link>
                     </Button>
                   </CardFooter>
                 </Card>
@@ -289,7 +289,7 @@ export default function Page() {
                   </CardContent>
                   <CardFooter>
                     <Button variant="ghost" size="sm" className="w-full" asChild>
-                      <Link href="/resources/denials">Read Guide</Link>
+                      <Link href="/dashboard/resources/denials">Read Guide</Link>
                     </Button>
                   </CardFooter>
                 </Card>
@@ -304,7 +304,7 @@ export default function Page() {
                   </CardContent>
                   <CardFooter>
                     <Button variant="ghost" size="sm" className="w-full" asChild>
-                      <Link href="/resources/documentation">Read Guide</Link>
+                      <Link href="/dashboard/resources/documentation">Read Guide</Link>
                     </Button>
                   </CardFooter>
                 </Card>
@@ -319,7 +319,7 @@ export default function Page() {
                   </CardContent>
                   <CardFooter>
                     <Button variant="ghost" size="sm" className="w-full" asChild>
-                      <Link href="/resources/terminology">Read Guide</Link>
+                      <Link href="/dashboard/resources/terminology">Read Guide</Link>
                     </Button>
                   </CardFooter>
                 </Card>

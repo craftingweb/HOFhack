@@ -18,7 +18,7 @@ export default function ClaimsPage() {
           <p className="text-muted-foreground">View and manage all your mental health insurance claims.</p>
         </div>
         <Button asChild>
-          <Link href="/claims/new">
+          <Link href="/dashboard/claims/new">
             <FilePlus className="mr-2 h-4 w-4" />
             New Claim
           </Link>
@@ -84,7 +84,7 @@ export default function ClaimsPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <Button variant="ghost" size="sm" asChild>
-                          <Link href="/claims/MH-2025-0412">View</Link>
+                          <Link href="/dashboard/claims/MH-2025-0412">View</Link>
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -101,7 +101,7 @@ export default function ClaimsPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <Button variant="ghost" size="sm" asChild>
-                          <Link href="/claims/MH-2025-0405">View</Link>
+                          <Link href="/dashboard/claims/MH-2025-0405">View</Link>
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -118,7 +118,7 @@ export default function ClaimsPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <Button variant="ghost" size="sm" asChild>
-                          <Link href="/claims/MH-2025-0328">View</Link>
+                          <Link href="/dashboard/claims/MH-2025-0328">View</Link>
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -135,7 +135,7 @@ export default function ClaimsPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <Button variant="ghost" size="sm" asChild>
-                          <Link href="/claims/MH-2025-0315">View</Link>
+                          <Link href="/dashboard/claims/MH-2025-0315">View</Link>
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -152,7 +152,7 @@ export default function ClaimsPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <Button variant="ghost" size="sm" asChild>
-                          <Link href="/claims/MH-2025-0301">View</Link>
+                          <Link href="/dashboard/claims/MH-2025-0301">View</Link>
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -185,7 +185,7 @@ export default function ClaimsPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <Button variant="ghost" size="sm" asChild>
-                          <Link href="/claims/MH-2025-0412">View</Link>
+                          <Link href="/dashboard/claims/MH-2025-0412">View</Link>
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -202,7 +202,7 @@ export default function ClaimsPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <Button variant="ghost" size="sm" asChild>
-                          <Link href="/claims/MH-2025-0405">View</Link>
+                          <Link href="/dashboard/claims/MH-2025-0405">View</Link>
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -235,7 +235,7 @@ export default function ClaimsPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <Button variant="ghost" size="sm" asChild>
-                          <Link href="/claims/MH-2025-0315">View</Link>
+                          <Link href="/dashboard/claims/MH-2025-0315">View</Link>
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -252,7 +252,7 @@ export default function ClaimsPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <Button variant="ghost" size="sm" asChild>
-                          <Link href="/claims/MH-2025-0301">View</Link>
+                          <Link href="/dashboard/claims/MH-2025-0301">View</Link>
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -285,7 +285,7 @@ export default function ClaimsPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <Button variant="ghost" size="sm" asChild>
-                          <Link href="/claims/MH-2025-0328">View</Link>
+                          <Link href="/dashboard/claims/MH-2025-0328">View</Link>
                         </Button>
                       </TableCell>
                     </TableRow>
