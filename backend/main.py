@@ -447,6 +447,27 @@ async def direct_upload(
         print(f"Error uploading files: {str(e)}")
         return {"error": f"Failed to upload files: {str(e)}"}
 
+@app.post("/get-claim-likelihood")
+async def get_claim_likelihood(claim: HealthClaim):
+    """Get the likelihood of a claim being approved using our custom API."""
+    headers = {
+        "Content-Type": "application/json",
+        "accept": "application/json"
+    }
+    content = "".join([
+        f"Condition: {claim.condition}\n",
+        f"Treatment: {claim.requested_treatment}\n",
+        f"Provider: {claim.health_insurance_provider}\n",
+        f"Explanation: {claim.explanation}\n"
+    ])
+    response = requests.post(
+        "https://hofhack-production-8ba8.up.railway.app/predict",
+        headers=headers,
+        json={"text": content}
+    )
+    return response.json()
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000) 
