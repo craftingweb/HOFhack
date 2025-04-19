@@ -18,7 +18,7 @@ export default function HelpCenterPage() {
     {
       role: "assistant",
       content:
-        "Hello! I'm your MindClaim assistant. How can I help you with your mental health insurance claims today?",
+        "Hello! I'm your AppealRX assistant. How can I help you with your mental health insurance claims today?",
     },
   ])
   const [input, setInput] = useState("")
