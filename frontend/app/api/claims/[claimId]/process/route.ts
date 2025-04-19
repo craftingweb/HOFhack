@@ -65,7 +65,7 @@ export async function POST(
     /* 3) forward to FastAPI backend ------------------------- */
     const backendUrl =
       process.env.PY_BACKEND_URL ||
-      'https://hofhack-production.up.railway.app/process-pdfs'
+      'https://hofhack-dev.up.railway.app/process-pdfs'
 
     console.log(`[process-route] Forwarding ${pdfFiles.length} files to ${backendUrl}`)
     

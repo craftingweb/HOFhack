@@ -585,7 +585,7 @@ async def get_claim_likelihood(claim: HealthClaim):
         f"Explanation: {claim.explanation}\n"
     ])
     response = requests.post(
-        "https://hofhack-production-8ba8.up.railway.app/predict",
+        "https://hofhack-dev.up.railway.app/predict",
         headers=headers,
         json={"text": content}
     )

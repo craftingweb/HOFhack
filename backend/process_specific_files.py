@@ -18,7 +18,7 @@ MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
 DB_NAME = os.getenv("DB_NAME", "claims-management")
 
 # Processing endpoint
-PROCESS_ENDPOINT = "https://hofhack-production.up.railway.app/process-pdfs"
+PROCESS_ENDPOINT = "https://hofhack-dev.up.railway.app/process-pdfs"
 
 # Specific file IDs from the image
 DEFAULT_FILE_IDS = [
