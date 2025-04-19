@@ -8,17 +8,19 @@ import PyPDF2
 import io
 import requests
 from langchain.vectorstores import Pinecone
-from langchain.embeddings import OpenAIEmbeddings
-from langchain.chat_models import ChatOpenAI
+from langchain.embeddings import JinaEmbeddings
+from langchain_deepseek import ChatDeepSeek
 from langchain.chains import RetrievalQA
 from langchain_pinecone import PineconeVectorStore
 import pinecone
 import os
 from dotenv import load_dotenv
+from openai import OpenAI
 
 # Load environment variables
 load_dotenv()
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
+JINA_API_KEY = os.getenv("JINA_API_KEY")
 
 app = FastAPI()
 
@@ -33,11 +35,58 @@ app.add_middleware(
 
 # Initialize Pinecone
 pc = pinecone.Pinecone(api_key=PINECONE_API_KEY)
+JINA_URL = "https://api.jina.ai/v1/embeddings"
+
+HEADERS = {
+    "Content-Type": "application/json",
+    "Authorization": f"Bearer {JINA_API_KEY}"
+}
+
+
+def get_embedding(text: str) -> list[float]:
+    payload = {
+        "model": "jina-clip-v2",
+        "input": [text],
+        "normalized": False
+    }
+    resp = requests.post(JINA_URL, headers=HEADERS, json=payload)
+    print(resp.content)
+    print(f"Response received from Jina AI, status: {resp.status_code}")
+    json_resp = resp.json()
+    print(f"Full response: {json_resp}")
+    
+    if "data" not in json_resp:
+        print(f"Error: Response missing 'data' key. Full response: {json_resp}")
+        if "error" in json_resp:
+            print(f"API Error: {json_resp['error']}")
+        raise KeyError(f"Response missing 'data' key. Full response: {json_resp}")
+    
+    if not json_resp["data"]:
+        raise ValueError("Response data is empty")
+    
+    if "embedding" not in json_resp["data"][0]:
+        raise KeyError(f"Response missing 'embedding' key. Data: {json_resp['data'][0]}")
+    
+    embeddings = json_resp["data"][0]["embedding"]
+    
+    return embeddings
 
 # Initialize OpenAI
-openai_api_key = os.getenv("OPENAI_API_KEY")
-embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)
-llm = ChatOpenAI(temperature=0, openai_api_key=openai_api_key)
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
+embeddings = JinaEmbeddings(
+    api_key=JINA_API_KEY, 
+    dimension=1024, 
+    model="jina-clip-v2", 
+    normalized=False
+)
+
+llm = ChatDeepSeek(
+    api_key=DEEPSEEK_API_KEY,
+    model="deepseek-chat",
+    temperature=0,
+    max_tokens=None,
+    timeout=None,
+)
 
 # Initialize Pinecone index
 index_name = "health-claims"
@@ -46,16 +95,17 @@ vectorstore = PineconeVectorStore(pinecone_api_key=PINECONE_API_KEY, index=index
 
 # DeepSeek configuration
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
-DEEPSEEK_URL = "https://api.deepseek.com/v1/chat/completions"  # Replace with actual DeepSeek API endpoint
+DEEPSEEK_URL = "https://api.deepseek.com"  # Replace with actual DeepSeek API endpoint
+client = OpenAI(api_key=DEEPSEEK_API_KEY, base_url=DEEPSEEK_URL)
 
 async def process_with_deepseek(text: str) -> dict:
     """
     Process text content with DeepSeek API to extract health claim information.
     """
-    headers = {
-        "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
-        "Content-Type": "application/json"
-    }
+#    headers = {
+#        "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
+#        "Content-Type": "application/json"
+#    }
     
     prompt = f"""
     Extract the following information from the provided text and return it in JSON format:
@@ -63,8 +113,9 @@ async def process_with_deepseek(text: str) -> dict:
     - date: The date of the claim in ISO format
     - health_insurance_provider: The name of the insurance provider
     - requested_treatment: The treatment being requested
-    - explanation: A brief explanation of the claim
+    - explanation: A comprehensive explanation of the claim
 
+    Ensure you capture all the information from the text.
     Text to analyze:
     {text}
     """
@@ -80,13 +131,19 @@ async def process_with_deepseek(text: str) -> dict:
     }
     
     try:
-        response = requests.post(DEEPSEEK_URL, headers=headers, json=payload)
-        response.raise_for_status()
+        response = client.chat.completions.create(
+            model= "deepseek-chat",  # Replace with actual model name
+            messages= [
+                {"role": "system", "content": "You are a helpful assistant that extracts health claim information from documents."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature= 0.1,
+            max_tokens= 1000
+        )
         
         # Extract the JSON response from DeepSeek's completion
-        result = response.json()
-        extracted_text = result["choices"][0]["message"]["content"]
-        
+        extracted_text = response.choices[0].message.content
+
         # Parse the JSON response
         try:
             # If the response is already JSON, use it directly
@@ -126,6 +183,8 @@ async def process_pdfs(files: List[UploadFile] = File(...)):
     Process multiple PDF files and extract health claim information using DeepSeek.
     """
     results = []
+
+    print(files)
     
     for file in files:
         if not file.filename.endswith('.pdf'):
@@ -144,23 +203,12 @@ async def process_pdfs(files: List[UploadFile] = File(...)):
         # Process text with DeepSeek
         try:
             deepseek_response = await process_with_deepseek(text)
+            print(deepseek_response)
             results.append(HealthClaim(**deepseek_response))
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error processing PDF {file.filename}: {str(e)}")
     
     return results
-
-@app.post("/predict-approval")
-async def predict_approval(claim: HealthClaim):
-    """
-    Predict whether a health claim is likely to be approved.
-    """
-    # TODO: Implement actual prediction logic
-    return {
-        "likely_approved": True,
-        "confidence": 0.85,
-        "reasoning": "Based on historical data and claim details"
-    }
 
 @app.post("/get-appeal-guidance", response_model=AppealGuidance)
 async def get_appeal_guidance(claim: HealthClaim):
@@ -175,23 +223,55 @@ async def get_appeal_guidance(claim: HealthClaim):
     Explanation: {claim.explanation}
     """
     
-    # Use LangChain with Pinecone for RAG
-    qa_chain = RetrievalQA.from_chain_type(
-        llm=llm,
-        chain_type="stuff",
-        retriever=vectorstore.as_retriever()
+    # Get embeddings directly from Jina API
+    query_embedding = get_embedding(query)    
+    
+    # Query Pinecone
+    query_results = index.query(
+        vector=query_embedding,
+        top_k=3,
+        include_metadata=True
     )
     
-    # Get relevant guidelines
-    response = qa_chain.run(query)
+    # Process results and format response
+    contexts = [item['metadata'] for item in query_results['matches']]
+    
+    # Pass contexts to DeepSeek for generating guidance
+    combined_context = "\n\n".join(json.dumps(context) for context in contexts)
+    
+    prompt = f"""
+    Based on the following reference information about health claims:
+    {combined_context}
+    
+    Provide appeal guidance for this claim:
+    Condition: {claim.condition}
+    Treatment: {claim.requested_treatment}
+    Provider: {claim.health_insurance_provider}
+    Explanation: {claim.explanation}
+    
+    Give specific, actionable guidance for improving the appeal.
+    """
+    
+    response = client.chat.completions.create(
+        model="deepseek-chat",
+        messages=[
+            {"role": "system", "content": "You are a health insurance claims expert."},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.1,
+        max_tokens=1000
+    )
+    
+    guidance_text = response.choices[0].message.content
+    
+    # Extract guidelines (assuming DeepSeek returns them in a list format)
+    guidelines = [line.strip() for line in guidance_text.split("\n") if line.strip().startswith("Guideline")]
+    if not guidelines:
+        guidelines = ["Provide detailed medical documentation", "Include peer-reviewed studies", "Demonstrate medical necessity"]
     
     return AppealGuidance(
-        guidelines=[
-            "Guideline 1: Provide detailed medical documentation",
-            "Guideline 2: Include peer-reviewed studies",
-            "Guideline 3: Demonstrate medical necessity"
-        ],
-        reasoning=response
+        guidelines=guidelines,
+        reasoning=guidance_text
     )
 
 if __name__ == "__main__":

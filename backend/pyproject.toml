@@ -23,6 +23,8 @@ openai = "1.75.0"
 pinecone = "^6.0.2"
 langchain-community = "^0.3.21"
 langchain-pinecone = "^0.2.5"
+langchain-deepseek = "^0.1.3"
+langchain-jina = "^0.0.1.dev0"
 
 
 [build-system]
