@@ -7,21 +7,16 @@ from datetime import datetime
 import PyPDF2
 import io
 import requests
-<<<<<<< HEAD
-from langchain_community.vectorstores import Pinecone
 from langchain_community.embeddings import OpenAIEmbeddings
 from langchain_community.chat_models import ChatOpenAI
-=======
 from langchain.vectorstores import Pinecone
 from langchain.embeddings import JinaEmbeddings
 from langchain_deepseek import ChatDeepSeek
->>>>>>> 8c7f74ee2c35a6d7ff3cbe27be639ac779ddaef9
 from langchain.chains import RetrievalQA
 from langchain_pinecone import PineconeVectorStore
 import pinecone
 import os
 from dotenv import load_dotenv
-<<<<<<< HEAD
 from bson import ObjectId
 from pymongo import MongoClient
 
@@ -29,19 +24,14 @@ from pymongo import MongoClient
 from claims_api import router as claims_router
 from classifier import router as classifier_router, register_routes as register_classifier_routes
 from submit_claim_to_provider import router as provider_router, register_routes as register_provider_routes
-=======
 from openai import OpenAI
->>>>>>> 8c7f74ee2c35a6d7ff3cbe27be639ac779ddaef9
 
 # Load environment variables
 load_dotenv()
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
-<<<<<<< HEAD
 MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
 DB_NAME = os.getenv("DB_NAME", "claims-management")
-=======
 JINA_API_KEY = os.getenv("JINA_API_KEY")
->>>>>>> 8c7f74ee2c35a6d7ff3cbe27be639ac779ddaef9
 
 app = FastAPI()
 
@@ -152,7 +142,7 @@ async def process_with_deepseek(text: str) -> dict:
     Ensure you capture all the information from the text.
     Text to analyze:
     {text}
-    """
+    """ 
     
     payload = {
         "model": "deepseek-chat",  # Replace with actual model name
@@ -210,6 +200,7 @@ class HealthClaim(BaseModel):
 class AppealGuidance(BaseModel):
     guidelines: List[str]
     reasoning: str
+    summary: str
 
 @app.post("/process-pdfs", response_model=List[HealthClaim])
 async def process_pdfs(files: List[UploadFile] = File(...)):
@@ -290,13 +281,27 @@ async def get_appeal_guidance(claim: HealthClaim):
         model="deepseek-chat",
         messages=[
             {"role": "system", "content": "You are a health insurance claims expert."},
-            {"role": "user", "content": prompt}
+            {"role": "user", "content": prompt},
         ],
         temperature=0.1,
         max_tokens=8192
     )
     
+    print(response.choices)
     guidance_text = response.choices[0].message.content
+
+    response = client.chat.completions.create(
+        model="deepseek-chat",
+        messages=[
+            {"role": "system", "content": "You are a health insurance claims expert."},
+            {"role": "user", "content": "Summarize the following guidance, as well as the appeal as a whole, in a short, patient-friendly summary."},
+            {"role": "user", "content": guidance_text}
+        ],
+        temperature=0.1,
+        max_tokens=1000
+    )
+
+    summary = response.choices[0].message.content
     
     # Extract guidelines (assuming DeepSeek returns them in a list format)
     guidelines = [line.strip() for line in guidance_text.split("\n") if line.strip().startswith("Guideline")]
@@ -305,7 +310,8 @@ async def get_appeal_guidance(claim: HealthClaim):
     
     return AppealGuidance(
         guidelines=guidelines,
-        reasoning=guidance_text
+        reasoning=guidance_text,
+        summary=summary
     )
 
 @app.post("/direct-upload")
