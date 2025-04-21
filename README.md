@@ -20,12 +20,12 @@ AppealRX also includes a **success prediction model**—a classifier trained on 
 **Backend:**
 - **MongoDB** stores user drafts, model outputs, and metadata.
 - **Pinecone** is used as our vector database, indexing past appeals, insurer policies, and mental health guidelines.
-- A fine-tuned **BERT model** classifies whether a draft appeal is likely to result in a favorable decision.
+- A fine-tuned **BERT model** trained on 7000+ appeals notes classifies whether a draft appeal is likely to result in a favorable decision
 - A custom **Retrieval-Augmented Generation (RAG)** pipeline retrieves relevant legal and clinical language.
 - To manage vector scaling, we route queries by insurance provider and preprocess large PDFs to extract and index only relevant content.
 
 ## Challenges we ran into
-- **Data Quality:** Medical appeals data was unstructured and inconsistent. Many documents included the appeal decision in the note body, causing label leakage. We resolved this by lemmatizing and filtering out outcome-related terms like *"denied"*, *"approved"*, or *"overturned"*.
+- **Data Quality:** Medical appeals data was unstructured and inconsistent. Many documents included the appeal decision in the note body, causing label leakage. We resolved this by lemmatizing and filtering out outcome-related terms like *"denied"*, *"approved"*, or *"overturned"* and leading alnguage.
 - **Database Scaling:** Retrieval slowed as more appeals and documents were added. We built a routing layer to narrow the search scope based on the user’s insurer.
 - **Policy Document Parsing:** We needed to preprocess PDFs to extract key terms (e.g., definitions of medical necessity) to feed into the RAG pipeline.
 
