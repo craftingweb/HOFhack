@@ -62,3 +62,6 @@ Ultimately, we want to make appeals **fairer, more transparent**, and **easier t
 
 ## Try it out
 🔗 [appealrx.vercel.app](https://appealrx.vercel.app)  
+
+![hof](https://github.com/user-attachments/assets/0d51c65c-e6fc-44b4-91d2-cbbe59bfe383)
+
